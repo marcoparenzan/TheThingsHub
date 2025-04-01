@@ -1,0 +1,72 @@
+﻿@page "/catalog/things/create"
+@using Microsoft.AspNetCore.Authorization
+@rendermode InteractiveServer
+
+@inject CatalogService catalogService
+@inject NavigationManager nm
+
+<PageTitle>New Thing</PageTitle>
+
+<MudCard Width="800px" Elevation="2">
+	<MudCardHeader>
+		Hello, New Thing!
+	</MudCardHeader>
+	<MudForm Model="@Model" @ref="@form" ValidationDelay="0">
+        <MudCardContent>
+            <MudTextField @bind-Value="Model.Name"
+                            For="@(() => Model.Name)"
+            Immediate="true"
+            Label="Name" />
+
+            <MudTextField @bind-Value="Model.Description"
+                            For="@(() => Model.Description)"
+                            Immediate="true"
+                            Label="Description" />
+        </MudCardContent>
+    </MudForm>
+    <MudCardActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await CreateNewThingAsync())">Create</MudButton>
+		<MudButton Variant="Variant.Filled" Color="Color.Default" Href="/catalog/things">Back to List</MudButton>
+	</MudCardActions>
+</MudCard>
+
+@code {
+
+    [SupplyParameterFromForm]
+    ThingModel Model { get; set; }
+
+    MudForm form;
+
+	protected override async Task OnInitializedAsync()
+	{
+		if (Model is null)
+		{
+			Model = catalogService.NewThing();
+		}
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+	}
+
+	private async Task CreateNewThingAsync()
+	{
+		try
+		{
+			await catalogService.CreateThingAsync(Model);
+			nm.NavigateTo("/catalog/things", true, true);
+		}
+		catch (NavigationException ex)
+		{
+
+		}
+		catch (Exception ex)
+		{
+			
+		}
+	}
+
+	private async Task OnInvalidSubmitAsync(EditContext ctx)
+	{
+	}
+}

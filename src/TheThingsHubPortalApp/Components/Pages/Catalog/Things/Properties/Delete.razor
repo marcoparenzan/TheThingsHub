@@ -1,0 +1,87 @@
+﻿@page "/catalog/things/{ThingId:int}/properties/delete/{Id:int}"
+@using Microsoft.AspNetCore.Authorization
+@rendermode InteractiveServer
+
+@inject CatalogService catalogService
+@inject NavigationManager nm
+
+<PageTitle>Delete</PageTitle>
+
+<h1>Delete</h1>
+
+<p>Are you sure you want to delete this?</p>
+<div>
+    <h2>Thing Property</h2>
+    <hr />
+    @if (Model is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="Model">
+            <dt class="col-sm-2">Name</dt>
+            <dd class="col-sm-10">@Model.Name</dd>
+        </dl>
+        <dl class="Model">
+            <dt class="col-sm-2">Value</dt>
+            <dd class="col-sm-10">@Model.Value</dd>
+        </dl>
+        <dl class="Model">
+            <dt class="col-sm-2">Type</dt>
+            <dd class="col-sm-10">@Model.Type</dd>
+        </dl>
+        <dl class="Model">
+            <dt class="col-sm-2">ContentType</dt>
+            <dd class="col-sm-10">@Model.ContentType</dd>
+        </dl>
+        <EditForm method="post" Model="Model" OnValidSubmit="DeleteAsync" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(Model is null)">Delete</button> |
+            <a href="/catalog/things/edit/@ThingId" class="btn btn-primary">Back to List</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+
+    [Parameter]
+    public int ThingId { get; set; }
+
+    [Parameter]
+    public int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    ThingPropertyModel Model { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Model is null)
+        {
+            Model = await catalogService.GetThingPropertyAsync(Id);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+    }
+
+    private async Task DeleteAsync(EditContext ctx)
+    {
+        try
+        {
+            await catalogService.DeleteThingPropertyAsync(Id);
+            nm.NavigateTo($"/catalog/things/edit/{ThingId}", true, true);
+        }
+        catch (NavigationException ex)
+        {
+
+        }
+        catch (Exception ex)
+        {
+
+        }
+    }
+
+    private async Task OnInvalidSubmitAsync(EditContext ctx)
+    {
+    }
+}

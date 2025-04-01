@@ -1,0 +1,82 @@
+﻿@page "/hmi"
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+@inject HmiJsInterop hmi
+
+<MudPaper Width="1200px" Elevation="2">
+    <HmiCanvas></HmiCanvas>
+    <button @onclick="SetAsync">Set</button>
+</MudPaper>
+
+@code {
+    string hmiId = "hmi01";
+
+    private DotNetObjectReference<Hmi>? pageProxy;
+
+    [Inject]
+    public IMessagingService Messaging { get; set; }
+
+    public async Task SetAsync()
+    {
+        var tankValue = Random.Shared.Next(1, 100);
+        await hmi.SetAsync("tank", tankValue);   
+        var tankColorValue = Random.Shared.Next(0, 100)>60 ? "Bad":"Good";
+        await hmi.SetAsync("tankColor", tankColorValue);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            pageProxy = DotNetObjectReference.Create(this);
+            await hmi.SetupAsync(hmiId, pageProxy, "canvas");
+            await hmi.StartAsync();
+        }
+        if (firstRender)
+        {
+            Messaging.Handle(async (msg) =>
+            {
+                switch (msg.Topic)
+                {
+                    case "sensors/filesensor/temperature":
+                        {
+                            var xxx = MqttRetainedMessageModel.Create(msg);
+                            var msg1 = JsonSerializer.Deserialize<JsonElement>(xxx.Payload);
+                            var tankValue = msg1.GetProperty("Value").GetDecimal();
+                            tankValue = (tankValue + 20) * 20;
+                            await hmi.SetAsync("tank", tankValue);
+                            break;
+                        }
+                    case "sensors/filesensor/status":
+                        {
+                            var xxx = MqttRetainedMessageModel.Create(msg);
+                            var msg1 = JsonSerializer.Deserialize<JsonElement>(xxx.Payload);
+                            var tankColorValue = msg1.GetString();
+                            await hmi.SetAsync("tankColor", tankColorValue);
+                            break;
+                        }
+                }
+            });
+            await Messaging.ConnectAsync("HmiPage");
+        }
+    }
+
+    async Task StartAsync()
+    {
+        await InvokeAsync(async () =>
+        {
+        });
+    }
+
+    [JSInvokable]
+    public async Task SetXYAsync(JsonElement x, JsonElement y, JsonElement tileType)
+    {
+        // if (x.TryGetInt32(out var xValue) && y.TryGetInt32(out var yValue) && tileType.TryGetInt32(out var tileTypeValue))
+        // {
+        //     mapService.Set(xValue, yValue, (MapTileType)tileTypeValue);
+        // }
+    }
+
+    public void Dispose() => pageProxy?.Dispose();
+}

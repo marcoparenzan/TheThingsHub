@@ -1,0 +1,62 @@
+﻿@page "/reports"
+@attribute [Authorize]
+
+<PageTitle>Reports</PageTitle>
+
+
+@if (reports is not null)
+{
+    <MudTabs ActivePanelIndexChanged="@(async (index) => await ShowReportAsync(index))">
+        @foreach (var reportEntry in reports.Value)
+        {
+            <MudTabPanel Text="@reportEntry.Name" ToolTip="@reportEntry.Name" />
+        }
+    </MudTabs>
+
+    <PowerBIEmbeddingReport @ref="reportControl"></PowerBIEmbeddingReport>
+}
+
+@code {
+    Microsoft.PowerBI.Api.Models.Reports reports;
+
+    PowerBIEmbeddingReport reportControl;
+
+    [Inject(Key = "FabricApp")]
+    public FabricApp App { get; set; }
+
+    [Inject(Key = "FabricWorkspaceConfig")]
+    public WorkspaceConfig Config { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await App.AuthenticateAsync();
+
+            reports = await App.PowerBiClient.Reports.GetReportsInGroupAsync(Guid.Parse(Config.WorkspaceId));
+
+            StateHasChanged();
+        }
+    }
+
+    async Task ShowReportAsync(int reportIndex)
+    {
+        var reportId = reports.Value[reportIndex].Id;
+        await ShowReportAsync(reportId.ToString());
+    }
+
+    async Task ShowReportAsync(string reportId)
+    {
+        var report = await App.GetReportInGroupAsync(Config.WorkspaceId, reportId);
+
+        var token = await App.GenerateTokenAsync(
+                Config.WorkspaceId,
+                reportId);
+
+        await reportControl.ShowReportAsync(
+            token,
+            report.EmbedUrl,
+            report.Id.ToString()
+        );
+    }
+}

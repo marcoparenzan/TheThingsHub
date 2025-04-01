@@ -1,0 +1,97 @@
+﻿@page "/catalog/things/{ThingId:int}/attachments/edit/{Id:int}"
+@using Microsoft.AspNetCore.Authorization
+@rendermode InteractiveServer
+
+@inject CatalogService catalogService
+@inject NavigationManager nm
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<MudCard Width="800px" Elevation="2">
+	@if (Model is null)
+	{
+		<p><em>Loading...</em></p>
+	}
+	else
+	{
+		<MudForm Model="@Model" @ref="@form" ValidationDelay="0">
+			<MudCardHeader>
+				Hello, Edit Thing Attachment!
+			</MudCardHeader>
+			<MudCardContent>
+				<MudTextField @bind-Value="Model.Name"
+				For="@(() => Model.Name)"
+				Immediate="true"
+				Label="Name" />
+
+				<MudTextField @bind-Value="Model.Value"
+				For="@(() => Model.Value)"
+				Immediate="true"
+				Label="Value" />
+
+				<MudTextField @bind-Value="Model.Type"
+				For="@(() => Model.Type)"
+				Immediate="true"
+				Label="Type" />
+
+				<MudTextField @bind-Value="Model.ContentType"
+				For="@(() => Model.ContentType)"
+				Immediate="true"
+				Label="ContentType" />
+			</MudCardContent>
+		</MudForm>
+		<MudCardActions>
+			<MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await UpdateThingAttachmentAsync())">Update</MudButton>
+			<MudButton Variant="Variant.Filled" Color="Color.Default" Href="@($"/catalog/things/edit/{ThingId}")">Back to List</MudButton>
+		</MudCardActions>
+	}
+</MudCard>
+
+@code {
+
+	[Parameter]
+	public int ThingId { get; set; }
+
+	[Parameter]
+	public int Id { get; set; }
+
+	[SupplyParameterFromForm]
+	ThingAttachmentModel Model { get; set; }
+
+	MudForm form;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Model is null)
+        {
+            Model = await catalogService.GetThingAttachmentAsync(Id);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+    }
+
+    private async Task UpdateThingAttachmentAsync()
+    {
+        try
+        {
+            await catalogService.UpdateAsync(Id, Model);
+            nm.NavigateTo($"/catalog/things/edit/{ThingId}", true, true);
+        }
+        catch (NavigationException ex)
+        {
+
+        }
+        catch (Exception ex)
+        {
+
+        }
+    }
+
+    private async Task OnInvalidSubmitAsync(EditContext ctx)
+    {
+    }
+}

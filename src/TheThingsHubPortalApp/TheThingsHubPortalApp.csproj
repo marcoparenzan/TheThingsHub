@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="certs\**" />
+	  <Content Remove="certs\**" />
+	  <EmbeddedResource Remove="certs\**" />
+	  <None Remove="certs\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Azure.Identity" Version="1.13.2" />
+		<PackageReference Include="Azure.Storage.Files.DataLake" Version="12.21.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.2" />
+		<PackageReference Include="MudBlazor" Version="7.*" />
+		<PackageReference Include="Extensions.MudBlazor.StaticInput" Version="2.*" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\CatalogLib\CatalogLib.csproj" />
+		<ProjectReference Include="..\KustoDashboardLib\KustoDashboardLib.csproj" />
+		<ProjectReference Include="..\PowerBIEmbeddingLib\PowerBIEmbeddingLib.csproj" />
+		<ProjectReference Include="..\FabricLib\FabricLib.csproj" />
+		<ProjectReference Include="..\PowerFxLib\PowerFxLib.csproj" />
+		<ProjectReference Include="..\UnifiedNamespaceLib\UnifiedNamespaceLib.csproj" />
+		<ProjectReference Include="..\HmiLib\HmiLib.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.2" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.2" NoWarn="NU1605" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="9.0.2" NoWarn="NU1605" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="9.0.2" />
+		<PackageReference Include="Microsoft.Identity.Web" Version="3.7.1" />
+		<PackageReference Include="Microsoft.Identity.Web.UI" Version="3.7.1" />
+	</ItemGroup>
+
+</Project>

@@ -1,0 +1,33 @@
+﻿@using Microsoft.JSInterop
+@inject PowerBIEmbeddingJsInterop interop
+
+<div @ref="@el" style="width:100%;height:600px;max-width: 2000px" />
+
+@code {
+
+    private ElementReference el;
+
+    private DotNetObjectReference<PowerBIEmbeddingReport>? proxy;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                proxy = DotNetObjectReference.Create(this);
+
+                await interop.SetupAsync("abc", proxy, el, "");
+            }
+            catch (Exception ex)
+            {
+                throw ex;   
+            }
+        }
+    }
+
+    public async Task ShowReportAsync(string accessToken, string embedUrl, string embedReportId)
+    {
+        await interop.ShowReportAsync("abc", accessToken, embedUrl, embedReportId);
+    }
+}

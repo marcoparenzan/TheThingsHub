@@ -1,0 +1,132 @@
+﻿@page "/unifiednamespace"
+
+<PageTitle>Unified Namespace</PageTitle>
+<MudPaper Width="1600px" Elevation="2">
+    <MudTreeView Items="@TreeItems" Hover="true">
+        <ItemTemplate Context="item">
+            <MudTreeViewItem Items="@item.Children" Icon="@item.Icon">
+                <BodyContent>
+                    <div style="display: grid; grid-template-columns: 1fr auto; align-items: center; width: 100%">
+                        <MudText Style="justify-self: start;">@item.Text [@item.Value.StringPayload]</MudText>
+                    </div>
+                </BodyContent>
+            </MudTreeViewItem>
+        </ItemTemplate>
+    </MudTreeView>
+</MudPaper>
+
+@code {
+
+    private List<TreeItemData<TreeItemContent>> TreeItems { get; set; } = [];
+
+    public class TreeItemContent
+    {
+        public string Topic { get; init; }
+        public string Text { get; init; }
+        public MqttRetainedMessageModel Value { get; set; }
+
+        public TreeItemContent(string topic, MqttRetainedMessageModel value = null)
+        {
+            Topic = topic;
+            Text = topic.Split('/')[^1];
+            Value = value;
+        }
+
+        public string StringPayload
+        {
+            get
+            {
+                if (Value is null) return string.Empty;
+                if (Value.Payload is null) return string.Empty;
+                return Encoding.UTF8.GetString(Value.Payload);
+            }            
+        }
+    }
+
+    [Inject(Key = "MqttClientPortalApp")]
+    public IMessagingService Messaging { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Messaging.Handle(async (msg) =>
+            {
+                Add(MqttRetainedMessageModel.Create(msg));
+                await StateHasChangesAsync();
+            });
+            var stay = true;
+            while (stay)
+            {
+                try
+                {
+                    await Messaging.ConnectAsync();
+                    await Messaging.SubscribeAsync("timers/#", "devicetelemetry/#", "devicestats/#");
+                    stay = false;
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+        }
+    }
+
+    void Add(MqttRetainedMessageModel msg, TreeItemData<TreeItemContent> parent = null, int depth = 0)
+    {
+        var subTopic = msg.Topic;
+        var items = TreeItems; 
+        if (parent is not null) 
+        {
+            items = parent.Children;
+            subTopic = subTopic.Substring(parent.Value.Topic.Length + 1);
+        }
+        var topicParts = subTopic.Split('/');
+        var text = topicParts[0];
+        var newTopic = text;
+        if (parent is not null) newTopic = $"{parent.Value.Topic}/{text}";
+        var treeItem = items.SingleOrDefault(xx => msg.Topic.StartsWith(xx.Value.Topic));
+        if (treeItem is null)
+        {
+            if (topicParts.Length == 1)
+            {
+                treeItem = new TreeItemData<TreeItemContent>
+                {
+                    Value = new TreeItemContent(newTopic, msg),
+                    Text = text,
+                    Children = []
+                };
+                items.Add(treeItem);
+            }
+            else
+            {
+                treeItem = new TreeItemData<TreeItemContent>
+                {
+                    Value = new TreeItemContent(newTopic),
+                    Text = text,
+                    Children = []
+                };
+                items.Add(treeItem);
+                Add(msg, treeItem, depth+1);
+            }
+        }
+        else
+        {
+            if (topicParts.Length == 1)
+            {
+                treeItem.Value.Value = msg;
+            }
+            else
+            {
+                Add(msg, treeItem, depth + 1);
+            }
+        }
+    }
+
+    async Task StateHasChangesAsync()
+    {
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+}

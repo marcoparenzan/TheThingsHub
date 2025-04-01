@@ -1,0 +1,83 @@
+﻿@page "/catalog/things/delete/{Id:int}"
+@using Microsoft.AspNetCore.Authorization
+@rendermode InteractiveServer
+
+@inject CatalogService catalogService
+@inject NavigationManager nm
+
+<PageTitle>Delete</PageTitle>
+
+<MudCard Width="800px" Elevation="2">
+	@if (Model is null)
+	{
+		<p><em>Loading...</em></p>
+	}
+	else
+	{
+		<MudForm Model="@Model" @ref="@form" ValidationDelay="0">
+			<MudCardHeader>
+				Delete Thing
+				<p>Are you sure you want to delete this?</p>
+			</MudCardHeader>
+			<MudCardContent>
+				<MudTextField ReadOnly="true" @bind-Value="Model.Name"
+				For="@(() => Model.Name)"
+				Immediate="true"
+				Label="Name" />
+
+				<MudTextField ReadOnly="true" @bind-Value="Model.Description"
+				For="@(() => Model.Description)"
+				Immediate="true"
+				Label="Description" />
+			</MudCardContent>
+		</MudForm>
+		<MudCardActions>
+			<MudButton Variant="Variant.Filled" Color="Color.Warning" Class="ml-auto" OnClick="@(async () => await DeleteThingAsync())">Delete</MudButton>
+			<MudButton Variant="Variant.Filled" Color="Color.Default" Href="/catalog/things">Back to List</MudButton>
+		</MudCardActions>
+	}
+
+</MudCard>
+
+@code {
+	[Parameter]
+	public int Id { get; set; }
+
+	[SupplyParameterFromForm]
+	ThingModel Model { get; set; }
+
+	MudForm form;
+
+	protected override async Task OnInitializedAsync()
+	{
+		if (Model is null)
+		{
+			Model = await catalogService.GetThingAsync(Id);
+		}
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+	}
+
+	private async Task DeleteThingAsync()
+	{
+		try
+		{
+			await catalogService.DeleteThingAsync(Id);
+			nm.NavigateTo("/catalog/things", true, true);
+		}
+		catch (NavigationException ex)
+		{
+
+		}
+		catch (Exception ex)
+		{
+
+		}
+	}
+
+	private async Task OnInvalidSubmitAsync(EditContext ctx)
+	{
+	}
+}

@@ -1,0 +1,211 @@
+﻿@page "/catalog/things/edit/{Id:int}"
+@using FabricLib.LakeHouse
+@using Microsoft.AspNetCore.Authorization
+@rendermode InteractiveServer
+
+@inject CatalogService catalogService
+@inject NavigationManager nm
+@inject LakeHouseService ols
+
+<PageTitle>Edit Thing</PageTitle>
+
+<MudCard Width="800px" Elevation="2">
+    @if (Model is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <MudForm Model="@Model" @ref="@form" ValidationDelay="0">
+            <MudCardHeader>
+                Hello, Edit Thing!
+            </MudCardHeader>
+            <MudCardContent>
+                <MudTextField @bind-Value="Model.Name"
+                For="@(() => Model.Name)"
+                Immediate="true"
+                Label="Name" />
+
+                <MudTextField @bind-Value="Model.Description"
+                For="@(() => Model.Description)"
+                Immediate="true"
+                Label="Description" />
+            </MudCardContent>
+        </MudForm>
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await UpdateThingAsync())">Update</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Default" Href="/catalog/things">Back to List</MudButton>
+        </MudCardActions>
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+            <MudTabPanel Text="Properties">
+
+                <MudDataGrid Items="@properties">
+                    <Columns>
+                        <PropertyColumn Property="@(property => property.Name)" />
+                        <PropertyColumn Property="@(property => property.Value)" />
+                        <PropertyColumn Property="@(property => property.Type)" />
+                        <PropertyColumn Property="@(property => property.ContentType)" />
+
+                        <TemplateColumn CellClass="d-flex justify-end">
+                            <CellTemplate>
+                                <MudStack Row>
+                                    <MudButton href="@($"catalog/things/{Id}/properties/edit/{context.Item.Id}")" Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Secondary">Edit</MudButton>
+                                    <MudButton href="@($"catalog/things/{Id}/properties/delete/{context.Item.Id}")" Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Warning">Delete</MudButton>
+                                </MudStack>
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+                </MudDataGrid>
+
+                <MudCardActions>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/catalog/things/{Id}/properties/create")">New Property</MudButton>
+                </MudCardActions>
+            </MudTabPanel>
+            <MudTabPanel Text="Attachments">
+
+                <MudDataGrid Items="@attachments">
+                    <Columns>
+                        <PropertyColumn Property="@(property => property.Name)" />
+                        <PropertyColumn Property="@(property => property.Value)" />
+                        <PropertyColumn Property="@(property => property.Type)" />
+                        <PropertyColumn Property="@(property => property.ContentType)" />
+
+                        <TemplateColumn CellClass="d-flex justify-end">
+                            <CellTemplate>
+                                <MudStack Row>
+                                    <MudButton href="@($"catalog/things/{Id}/attachments/edit/{context.Item.Id}")" Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Secondary">Edit</MudButton>
+                                    <MudButton href="@($"catalog/things/{Id}/attachments/delete/{context.Item.Id}")" Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Warning">Delete</MudButton>
+                                </MudStack>
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+                </MudDataGrid>
+
+
+                @if (files != null)
+                {
+                    <MudList T="string">
+                        @foreach (var file in files)
+                        {
+                            <MudListItem Icon="@Icons.Material.Filled.AttachFile">
+                                @file.Name <code>@file.Size bytes</code>
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
+
+                <MudCardActions>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/catalog/things/{Id}/attachments/create")">New Attachment</MudButton>
+                    <MudFileUpload T="IReadOnlyList<IBrowserFile>" FilesChanged="UploadFiles">
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Filled"
+                            Color="Color.Secondary"
+                            StartIcon="@Icons.Material.Filled.CloudUpload">
+                                Select File(s) to attach
+                            </MudButton>
+                        </ActivatorContent>
+                    </MudFileUpload>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="AttachFilesAsync">Attach files</MudButton>
+                </MudCardActions>
+            </MudTabPanel>
+        </MudTabs>
+
+    }
+
+</MudCard>
+
+@code {
+
+    IQueryable<ThingPropertyItem> properties;
+    IQueryable<ThingAttachmentItem> attachments;
+
+    [Parameter]
+    public int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    ThingModel Model { get; set; }
+
+    MudForm form;
+
+    IList<IBrowserFile> files = new List<IBrowserFile>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Model is null)
+        {
+            Model = await catalogService.GetThingAsync(Id);
+            properties = await catalogService.GetThingPropertiesAsync(Id);
+            attachments = await catalogService.GetThingAttachmentsAsync(Id);
+        }
+    }
+
+    async Task CreateAsync()
+    {
+        nm.NavigateTo($"/catalog/things/properties/create?thingId={Id}");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+    }
+
+    private async Task UpdateThingAsync()
+    {
+        try
+        {
+            await catalogService.UpdateAsync(Id, Model);
+            nm.NavigateTo("/catalog/things", true, true);
+        }
+        catch (NavigationException ex)
+        {
+
+        }
+        catch (Exception ex)
+        {
+
+        }
+    }
+
+    private async Task OnInvalidSubmitAsync(EditContext ctx)
+    {
+    }
+
+    private void UploadFiles(IReadOnlyList<IBrowserFile> files)
+    {
+        foreach (var file in files)
+        {
+            this.files.Add(file);
+        }
+        //TODO upload the files to the server
+        StateHasChanged();
+    }
+
+    private async Task AttachFilesAsync()
+    {
+        var provider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+
+        foreach (var browseFile in files)
+        {
+            var extension = Path.GetExtension(browseFile.Name);
+            var filename = $"{Id}-{Path.GetFileNameWithoutExtension(browseFile.Name)}-{DateTimeOffset.Now.ToFileTime()}{extension}";
+            using (var str = browseFile.OpenReadStream())
+            {
+                await ols.UploadFileAsync("Things", "Attachments", filename, str);
+            }
+            
+            var newAttachment = catalogService.NewThingAttachment();
+            newAttachment.Name = filename;
+            newAttachment.Value = filename;
+            newAttachment.Type = extension;
+            if (provider.TryGetContentType(browseFile.Name, out var contentType))
+            {
+                newAttachment.ContentType = contentType;
+            }
+            else
+            {
+                newAttachment.ContentType = browseFile.ContentType;
+            }
+            var newId = await catalogService.CreateThingAttachmentAsync(Id, newAttachment);
+        }
+		files.Clear();
+	}
+}

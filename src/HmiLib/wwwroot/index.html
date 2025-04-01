@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="/">
+    <link rel="stylesheet" href="css/bootstrap.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="css/HmiApp.styles.css" />
+    <link rel="icon" type="image/png" href="favicon.png">
+</head>
+<body>
+    <div class="page" b-tk4lmoijzd>
+        <div class="sidebar" b-tk4lmoijzd>
+            <div class="top-row ps-3 navbar navbar-dark" b-m82wjznhc9>
+                <div class="container-fluid" b-m82wjznhc9>
+                    <a class="navbar-brand" href b-m82wjznhc9>HmiApp</a>
+                </div>
+            </div>
+            <input type="checkbox" title="Navigation menu" class="navbar-toggler" b-m82wjznhc9>
+            <div class="nav-scrollable" onclick="document.querySelector(&#x27;.navbar-toggler&#x27;).click()" b-m82wjznhc9>
+                <nav class="nav flex-column" b-m82wjznhc9>
+                    <div class="nav-item px-3" b-m82wjznhc9>
+                        <a href="" class="nav-link active" aria-current="page">
+                            <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true" b-m82wjznhc9></span>
+                            Home
+
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        <main b-tk4lmoijzd>
+            <div class="top-row px-4" b-tk4lmoijzd>
+                <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            </div>
+            <article class="content px-4">
+                <div>
+                    <canvas id="canvas"></canvas>
+                </div>
+            </article>
+        </main>
+    </div>
+    <script type="module">
+
+        import('./js/hmi.js').then((hmi) => {
+            hmi.setup("hmi01", null, "canvas", "");
+            hmi.start("hmi01");
+        });
+
+    </script>
+</body>
+</html>

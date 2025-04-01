@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "UnifiedNamespace2025",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

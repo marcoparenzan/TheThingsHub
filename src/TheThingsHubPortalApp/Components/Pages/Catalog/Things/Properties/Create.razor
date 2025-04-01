@@ -1,0 +1,85 @@
+﻿@page "/catalog/things/{ThingId:int}/properties/create"
+@using Microsoft.AspNetCore.Authorization
+@rendermode InteractiveServer
+
+@inject CatalogService catalogService
+@inject NavigationManager nm
+
+<PageTitle>New thing property</PageTitle>
+
+
+<MudCard Width="800px" Elevation="2">
+    <MudCardHeader>
+        Hello, New Thing Property!
+    </MudCardHeader>
+    <MudForm Model="@Model" @ref="@form" ValidationDelay="0">
+        <MudCardContent>
+            <MudTextField @bind-Value="Model.Name"
+            For="@(() => Model.Name)"
+            Immediate="true"
+            Label="Name" />
+
+            <MudTextField @bind-Value="Model.Value"
+                          For="@(() => Model.Value)"
+            Immediate="true"
+                          Label="Value" />
+            <MudTextField @bind-Value="Model.Type"
+                          For="@(() => Model.Type)"
+                          Immediate="true"
+                          Label="Type" />
+            <MudTextField @bind-Value="Model.ContentType"
+                          For="@(() => Model.ContentType)"
+                          Immediate="true"
+                          Label="ContentType" />
+        </MudCardContent>
+    </MudForm>
+    <MudCardActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await CreateNewThingPropertyAsync())">Create</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Default" Href="/catalog/things">Back to List</MudButton>
+    </MudCardActions>
+</MudCard>
+<MudButton Variant="Variant.Filled" Color="Color.Default" Href="@($"/catalog/things/edit/{ThingId}")">Back to List</MudButton>
+
+@code {
+
+    [Parameter]
+    public int ThingId { get; set; }
+
+    [SupplyParameterFromForm]
+    ThingPropertyModel Model { get; set; }
+
+    MudForm form;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Model is null)
+        {
+            Model = catalogService.NewThingProperty();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+    }
+
+    private async Task CreateNewThingPropertyAsync()
+    {
+        try
+        {
+            await catalogService.CreateThingPropertyAsync(ThingId, Model);
+            nm.NavigateTo($"/catalog/things/edit/{ThingId}", true, true);
+        }
+        catch (NavigationException ex)
+        {
+
+        }
+        catch (Exception ex)
+        {
+
+        }
+    }
+
+    private async Task OnInvalidSubmitAsync(EditContext ctx)
+    {
+    }
+}

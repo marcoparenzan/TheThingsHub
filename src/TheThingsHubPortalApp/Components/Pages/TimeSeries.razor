@@ -1,0 +1,54 @@
+﻿@page "/TimeSeries"
+@rendermode InteractiveServer
+@attribute [Authorize]
+
+@inject KustoDashboardJsInterop kustoDashboard
+
+<MudPaper Width="1200px" Elevation="2">
+    <KustoDashboardCanvas WorkspaceId="a1badeec-a4dc-480b-a8a6-7065c012dee1"></KustoDashboardCanvas>
+</MudPaper>
+
+@code {
+    string kustoDashboardId = "kustoDashboard01";
+
+    private DotNetObjectReference<TimeSeries>? pageProxy;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                pageProxy = DotNetObjectReference.Create(this);
+                await kustoDashboard.SetupAsync(kustoDashboardId, pageProxy, "canvas");
+                await kustoDashboard.StartAsync();
+            }
+            catch (Exception ex)
+            {
+                throw ex;    
+            }
+        }
+    }
+
+    async Task StartAsync()
+    {
+        await InvokeAsync(async () =>
+        {
+        });
+    }
+
+    [JSInvokable]
+    public async Task<string> GetTokenAsync(string scope)
+    {
+        try
+        {
+            return ""; // await AccessTokenHelper2.GetAccessTokenAsync(scope); 
+        }
+        catch (Exception ex)
+        {
+            return "";
+        }
+    }
+
+    public void Dispose() => pageProxy?.Dispose();
+}
