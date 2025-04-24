@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "iotmgmt-dev": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:7087;http://localhost:5090",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "TenantConfigurationFile": "D:\\Configurations\\TheThingsHub\\iotmgmt-dev.json",
+        "TenantConfigurationName": "iotmgmt"
+      }
+    }
+  }
+}

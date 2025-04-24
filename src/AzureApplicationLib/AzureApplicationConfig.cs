@@ -6,22 +6,6 @@ namespace AzureApplicationLib;
 
 public partial class AzureApplicationConfig
 {
-    private AzureApplicationConfig() { }
-
-    public static AzureApplicationConfig New(string tenantId = null, string subscriptionId = null, string clientId = null, string clientSecret = null, string username = null, string password = null, string resource = null)
-    {
-        return new AzureApplicationConfig
-        {
-            TenantId = tenantId,
-            SubscriptionId = subscriptionId,
-            ClientId = clientId,
-            ClientSecret = clientSecret,
-            Username = username,
-            Password = password,
-            Resource = resource
-        };
-    }
-
     public string AdminConsentUrl => $"https://login.microsoftonline.com/{TenantId}/adminconsent?client_id={ClientId}";
 
     public static readonly AzureApplicationConfig Empty = new AzureApplicationConfig();
@@ -39,6 +23,10 @@ public partial class AzureApplicationConfig
 
     [JsonPropertyName("clientSecret")]
     public string ClientSecret { get; set; }
+    [JsonPropertyName("clientSecretName")]
+    public string ClientSecretName { get; set; }
+    [JsonPropertyName("clientSecretExpiration")]
+    public DateTimeOffset? ClientSecretExpiration { get; set; }
 
     [JsonPropertyName("adminUserName")]
     public string Username { get; set; }

@@ -5,12 +5,10 @@ using FabricLib;
 using FabricLib.LakeHouse;
 using KustoDashboardLib;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
-using MQTTnet;
 using MudBlazor.Services;
 using PowerBIEmbeddingLib;
 using System.Text.Json;
@@ -58,15 +56,15 @@ var config = configBuilder.Build();
 
 #region Fabric Config
 
-var fabricAppConfig = AzureApplicationConfig.New(
-    tenantId: config["FabricAppConfig:tenantId"],
-    subscriptionId: config["FabricAppConfig:subscriptionId"],
-    clientId: config["FabricAppConfig:clientId"],
-    clientSecret: config["FabricAppConfig:clientSecret"],
-    username: config["FabricAppConfig:username"],
-    password: config["FabricAppConfig:password"],
-    resource: AzureResource.Parse(config["FabricAppConfig:resource"])
-);
+var fabricAppConfig = new AzureApplicationConfig { 
+    TenantId = config["FabricAppConfig:TenantId"],
+    SubscriptionId = config["FabricAppConfig:SubscriptionId"],
+    ClientId = config["FabricAppConfig:ClientId"],
+    ClientSecret = config["FabricAppConfig:ClientSecret"],
+    Username = config["FabricAppConfig:Username"],
+    Password = config["FabricAppConfig:Password"],
+    Resource = AzureResource.Parse(config["FabricAppConfig:Resource"])
+};
 builder.Services.AddKeyedSingleton("FabricAppConfig", fabricAppConfig);
 builder.Services.AddKeyedTransient<FabricApp>("FabricApp");
 var workspaceInfo = config.GetSection("FabricWorkspaceConfig").Get<WorkspaceConfig>();

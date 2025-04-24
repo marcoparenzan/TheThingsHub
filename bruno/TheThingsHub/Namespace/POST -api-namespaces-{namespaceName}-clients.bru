@@ -1,0 +1,18 @@
+meta {
+  name: POST /api/namespaces/{namespaceName}/clients
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://localhost:7087/api/namespaces/NeoForgeIndustries-TheThingsHub-uns/clients
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "clientName":"device01",
+    "thumbprint": "hello"
+  }
+}

@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 
 namespace AzureApplicationLib;
 
-public partial class AzureApplication
+public partial class AzureApplication<TConfig>
 {
     private HttpClient httpClient;
 
