@@ -17,5 +17,6 @@ public partial class ThingsAttachment
 
     public string? ContentType { get; set; }
 
+    public string? ContentEncoding { get; set; }
     public virtual Thing Thing { get; set; } = null!;
 }

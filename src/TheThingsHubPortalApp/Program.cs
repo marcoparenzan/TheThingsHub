@@ -5,12 +5,15 @@ using FabricLib;
 using FabricLib.LakeHouse;
 using KustoDashboardLib;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.DotNet.Scaffolding.Shared;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using MudBlazor.Services;
 using PowerBIEmbeddingLib;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.Json;
 using TheThingsHubPortalApp.Components;
 using TheThingsHubPortalApp.Services;
@@ -240,8 +243,9 @@ app.MapPost("/api/pipelinetimer", async (HttpContext ctx, IServiceProvider sp, J
         throw;
     }
 });
+Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider provider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
 
-app.MapGet("/api/things/{thingId}/certificate", async (HttpContext ctx, IServiceProvider sp, CertificateService cs, UriTools uriTools, string thingId) =>
+app.MapGet("/api/catalog/things/{thingId}/properties/{propertyName}", async (HttpContext ctx, IServiceProvider sp, UriTools uriTools, int thingId, string propertyName) =>
 {
     //if (IsRemoteRequest(ctx))
     //{
@@ -253,12 +257,63 @@ app.MapGet("/api/things/{thingId}/certificate", async (HttpContext ctx, IService
 
     try
     {
-
         var catalog = sp.GetService<CatalogService>();
-        var deviceCert = await catalog.GetThingPropertyAsync(thingId, "DeviceCert");
+        var thingProperty = await catalog.GetThingPropertyAsync(thingId, propertyName);
+        if (thingProperty is null)
+        {
+            return Results.Empty;
+        }
+        var extension = provider.Mappings.FirstOrDefault(x => x.Value == thingProperty.ContentType).Key;
+        if (thingProperty.Type == "byte[]")
+        {
+            var bytes = Convert.FromBase64String(thingProperty.Value);
+            return Results.File(bytes, thingProperty.ContentType, $"{thingId}-{propertyName}{extension}"); // {.pfx}
+        }
+        var bytes1 = Encoding.UTF8.GetBytes(thingProperty.Value);
+        return Results.File(bytes1, thingProperty.ContentType, $"{thingId}-{propertyName}{extension}"); // {.pfx}
+    }
+    catch (Exception ex)
+    {
+        throw;
+    }
+});
+
+
+app.MapGet("/api/catalog/things/{thingId}/certificate/{format}", async (HttpContext ctx, IServiceProvider sp, CertificateService cs, UriTools uriTools, int thingId, string? format) =>
+{
+    //if (IsRemoteRequest(ctx))
+    //{
+    //    if (!uriTools.Validate(ctx.Request.Query))
+    //    {
+    //        return Results.BadRequest("Invalid signature");
+    //    }
+    //}
+
+    try
+    {
+        var catalog = sp.GetService<CatalogService>();
+        var cert = await catalog.GetThingPropertyAsync(thingId, "DeviceCert");
+        //if (cert is null)
+        //{
+        //    cert = await catalog.GetThingPropertyAsync(thingId, "IntermediateCACert");
+        //}
+        if (cert is null)
+        {
+            cert = await catalog.GetThingPropertyAsync(thingId, "RootCACert");
+        }
         var password = await catalog.GetThingPropertyAsync(thingId, "password");
-        var deviceCertBytes = Convert.FromBase64String(deviceCert.Value);
-        return Results.File(deviceCertBytes, deviceCert.ContentType, $"{thingId}.pfx");
+        var deviceCertBytes = Convert.FromBase64String(cert.Value);
+        switch (format)
+        {
+            case "pem":
+                var pfx = X509CertificateLoader.LoadPkcs12(deviceCertBytes, password.Value);
+                var pem = cs.ExportToPem(pfx);
+                var pemBytes = Encoding.UTF8.GetBytes(pem);
+                // https://pki-tutorial.readthedocs.io/en/latest/mime.html
+                return Results.File(pemBytes, "application/x-pem-file", $"{thingId}-{cert.Name}.pem ");
+            default:
+                return Results.File(deviceCertBytes, cert.ContentType, $"{thingId}-{cert.Name}.pfx");
+        }
     }
     catch (Exception ex)
     {

@@ -60,7 +60,7 @@
     {
         try
         {
-            var password = await catalogService.GetThingPropertyAsync(context.Item.Name, "Password");
+            var password = await catalogService.GetThingPropertyAsync(context.Item.Id.Value, "Password");
             var result = await DialogService.ShowMessageBox("Password", password.Value, yesText: "OK", cancelText: "Cancel", options: new DialogOptions() { CloseOnEscapeKey = true });
         }
         catch (Exception ex)
@@ -74,7 +74,7 @@
         try
         {
             var request = HttpContextAccessor.HttpContext.Request;
-            var url = $"{request.Scheme}://{request.Host}/api/things/{context.Item.Name}/certificate";
+            var url = $"{request.Scheme}://{request.Host}/api/catalog/things/{context.Item.Id}/certificate/pfx";
             var sasUrl = UriTools.GenerateSasUrl(url);
             var result = await DialogService.ShowMessageBox("SAS", sasUrl, yesText: "OK", cancelText: "Cancel", options: new DialogOptions() { CloseOnEscapeKey = true });
         }

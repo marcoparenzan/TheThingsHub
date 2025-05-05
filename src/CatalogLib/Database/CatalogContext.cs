@@ -32,6 +32,7 @@ public partial class CatalogContext : DbContext
             entity.ToTable("ThingsAttachments", "catalog");
 
             entity.Property(e => e.ContentType).HasMaxLength(64);
+            entity.Property(e => e.ContentEncoding).HasMaxLength(64);
             entity.Property(e => e.Name).HasMaxLength(256);
             entity.Property(e => e.Type).HasMaxLength(32);
 
@@ -46,6 +47,7 @@ public partial class CatalogContext : DbContext
             entity.ToTable("ThingsProperties", "catalog");
 
             entity.Property(e => e.ContentType).HasMaxLength(64);
+            entity.Property(e => e.ContentEncoding).HasMaxLength(64);
             entity.Property(e => e.Name).HasMaxLength(64);
             entity.Property(e => e.Type).HasMaxLength(32);
 

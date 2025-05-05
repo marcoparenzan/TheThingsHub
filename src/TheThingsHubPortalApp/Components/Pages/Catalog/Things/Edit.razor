@@ -6,6 +6,7 @@
 @inject CatalogService catalogService
 @inject NavigationManager nm
 @inject LakeHouseService ols
+@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>Edit Thing</PageTitle>
 
@@ -50,6 +51,9 @@
                         <TemplateColumn CellClass="d-flex justify-end">
                             <CellTemplate>
                                 <MudStack Row>
+                                    @* <MudButton @onclick="() => DownloadAsync(context)" Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Default">Download</MudButton> *@
+                                    <MudButton href="@($"api/catalog/things/{Id}/properties/{context.Item.Name}")" Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Default">Download</MudButton>
+                                    <MudButton href="@($"api/catalog/things/{Id}/certificate/pem")" Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Default">PEM</MudButton>
                                     <MudButton href="@($"catalog/things/{Id}/properties/edit/{context.Item.Id}")" Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Secondary">Edit</MudButton>
                                     <MudButton href="@($"catalog/things/{Id}/properties/delete/{context.Item.Id}")" Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Warning">Delete</MudButton>
                                 </MudStack>
@@ -117,6 +121,10 @@
 </MudCard>
 
 @code {
+
+    [Inject] private IDialogService DialogService { get; set; }
+
+    [Inject] private WebLib.UriTools UriTools { get; set; }
 
     IQueryable<ThingPropertyItem> properties;
     IQueryable<ThingAttachmentItem> attachments;
@@ -220,5 +228,23 @@
         newAttachment.ContentType = contentType;
         var newId = await catalogService.CreateThingAttachmentAsync(Id, newAttachment);
         return newId;
+    }
+
+
+    async Task ShowExceptionAsync(Exception exception)
+    {
+        var result = await DialogService.ShowMessageBox("Error", exception.Message, yesText: "OK", cancelText: "Cancel", options: new DialogOptions() { CloseOnEscapeKey = true });
+    }
+
+    async Task DownloadAsync(CellContext<ThingPropertyItem> context)
+    {
+        try
+        {
+            
+        }
+        catch (Exception ex)
+        {
+            await ShowExceptionAsync(ex);
+        }
     }
 }
