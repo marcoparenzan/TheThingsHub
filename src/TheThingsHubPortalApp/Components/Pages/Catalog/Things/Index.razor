@@ -4,6 +4,7 @@
 
 @inject CatalogService catalogService
 @inject NavigationManager nm
+@inject IHttpContextAccessor HttpContextAccessor
 
 <PageTitle>Things</PageTitle>
 
@@ -17,8 +18,10 @@
         <TemplateColumn CellClass="d-flex justify-end">
             <CellTemplate>
                 <MudStack Row>
-                    <MudButton @onclick="()=>EditAsync(context)" Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Secondary">Edit</MudButton>
-                    <MudButton @onclick="()=>DeleteAsync(context)" Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Warning">Delete</MudButton>
+                    <MudButton @onclick="() => ShowPasswordAsync(context)" Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Default">Show Password</MudButton>
+                    <MudButton @onclick="() => GetCertificateSasAsync(context)" Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Default">Get Certificate SAS</MudButton>
+                    <MudButton @onclick="() => EditAsync(context)" Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Secondary">Edit</MudButton>
+                    <MudButton @onclick="() => DeleteAsync(context)" Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Warning">Delete</MudButton>
                 </MudStack>
             </CellTemplate>
         </TemplateColumn>
@@ -29,6 +32,10 @@
 
 @code {
     IQueryable<ThingItem> things;
+
+    [Inject] private IDialogService DialogService { get; set; }
+
+    [Inject] private WebLib.UriTools UriTools { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -49,6 +56,38 @@
         nm.NavigateTo($"catalog/things/delete/{context.Item.Id}");
     }
 
+    async Task ShowPasswordAsync(CellContext<ThingItem> context)
+    {
+        try
+        {
+            var password = await catalogService.GetThingPropertyAsync(context.Item.Name, "Password");
+            var result = await DialogService.ShowMessageBox("Password", password.Value, yesText: "OK", cancelText: "Cancel", options: new DialogOptions() { CloseOnEscapeKey = true });
+        }
+        catch (Exception ex)
+        {
+            await ShowExceptionAsync(ex);
+        }
+    }
+
+    async Task GetCertificateSasAsync(CellContext<ThingItem> context)
+    {
+        try
+        {
+            var request = HttpContextAccessor.HttpContext.Request;
+            var url = $"{request.Scheme}://{request.Host}/api/things/{context.Item.Name}/certificate";
+            var sasUrl = UriTools.GenerateSasUrl(url);
+            var result = await DialogService.ShowMessageBox("SAS", sasUrl, yesText: "OK", cancelText: "Cancel", options: new DialogOptions() { CloseOnEscapeKey = true });
+        }
+        catch (Exception ex)
+        {
+            await ShowExceptionAsync(ex);
+        }
+    }
+
+    async Task ShowExceptionAsync(Exception exception)
+    {
+        var result = await DialogService.ShowMessageBox("Error", exception.Message, yesText: "OK", cancelText: "Cancel", options: new DialogOptions() { CloseOnEscapeKey = true });
+    }
 
     async Task CreateAsync()
     {

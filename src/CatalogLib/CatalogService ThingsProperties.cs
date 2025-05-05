@@ -42,6 +42,23 @@ public partial class CatalogService
         return single;
     }
 
+    public async Task<ThingPropertyModel> GetThingPropertyAsync(string thingName, string propertyName)
+    {
+        var single = await context.ThingsProperties
+            .Where(xx => xx.Thing.Name == thingName && xx.Name == propertyName)
+            .Select(xx => new ThingPropertyModel()
+            {
+                Name = xx.Name,
+                Type = xx.Type,
+                Value = xx.Value,
+                ContentType = xx.ContentType
+            })
+            .SingleOrDefaultAsync()
+        ;
+
+        return single;
+    }
+
     public async Task UpdateAsync(int id, ThingPropertyModel model)
     {
         var single = await context.ThingsProperties

@@ -2,16 +2,12 @@
 
 namespace AzureApplicationLib;
 
-public partial class AzureApplication<TConfig>
-    where TConfig : AzureApplicationConfig
+public partial class AzureApplication
 {
-    private ILogger logger;
+    public AzureApplicationConfig Config { get; private set; }
 
-    public TConfig Config { get; set; }
-
-    public AzureApplication(TConfig config = null, ILogger logger = null)
+    public AzureApplication(AzureApplicationConfig config = null)
     {
         this.Config = config;
-        this.logger = logger ?? ConsoleLogger.Default;
     }
 }

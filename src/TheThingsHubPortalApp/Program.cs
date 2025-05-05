@@ -15,7 +15,7 @@ using System.Text.Json;
 using TheThingsHubPortalApp.Components;
 using TheThingsHubPortalApp.Services;
 using UnifiedNamespaceLib.Services;
-using UnifiedNamespaceLib.Services.Workers;
+using WebLib;
 
 var builder = WebApplication.CreateBuilder(args);
 IConfigurationBuilder configBuilder = builder.Configuration;
@@ -54,24 +54,31 @@ if (!configurationReady)
 
 var config = configBuilder.Build();
 
-#region Fabric Config
+var fabricAppConfig = RegisterAzureApplication<FabricApp>("FabricApp");
+var iotMgmtAppConfig = RegisterAzureApplication<AzureApplication>("IoTMgmtApp");
 
-var fabricAppConfig = new AzureApplicationConfig { 
-    TenantId = config["FabricAppConfig:TenantId"],
-    SubscriptionId = config["FabricAppConfig:SubscriptionId"],
-    ClientId = config["FabricAppConfig:ClientId"],
-    ClientSecret = config["FabricAppConfig:ClientSecret"],
-    Username = config["FabricAppConfig:Username"],
-    Password = config["FabricAppConfig:Password"],
-    Resource = AzureResource.Parse(config["FabricAppConfig:Resource"])
-};
-builder.Services.AddKeyedSingleton("FabricAppConfig", fabricAppConfig);
-builder.Services.AddKeyedTransient<FabricApp>("FabricApp");
-var workspaceInfo = config.GetSection("FabricWorkspaceConfig").Get<WorkspaceConfig>();
-builder.Services.AddKeyedSingleton<WorkspaceConfig>("FabricWorkspaceConfig", workspaceInfo);
-builder.Services.AddTransient<LakeHouseService>(sp => new LakeHouseService(sp.GetKeyedService<FabricApp>("FabricApp"), workspaceInfo));
+builder.Services.AddKeyedSingleton<WorkspaceConfig>("FabricWorkspaceConfig", (sp, key) => config.GetSection("FabricWorkspaceConfig").Get<WorkspaceConfig>());
+builder.Services.AddTransient<LakeHouseService>(sp =>
+    new LakeHouseService(
+        sp.GetKeyedService<FabricApp>("FabricApp"),
+        sp.GetKeyedService<WorkspaceConfig>("FabricWorkspaceConfig")
+    )
+);
 
-#endregion
+RegisterService<AzureIoTLib.EventGrid.EventGridIdentityService, AzureIoTLib.EventGrid.EventGridIdentityServiceConfig>("EventGridIdentityService", (valueOf) => new AzureIoTLib.EventGrid.EventGridIdentityServiceConfig
+{
+    AppName = valueOf("AppName"),
+    SubscriptionId = valueOf("SubscriptionId"),
+    ResourceGroupName = valueOf("ResourceGroupName"),
+    NamespaceName = valueOf("NamespaceName")
+});
+builder.Services.AddTransient<CatalogLib.CertificateService>();
+
+RegisterService<AzureIoTLib.IoTHub.IoTHubIdentityService, AzureIoTLib.IoTHub.IoTHubIdentityServiceConfig>("IoTHubIdentityService", (valueOf) => new AzureIoTLib.IoTHub.IoTHubIdentityServiceConfig
+{
+    AppName = valueOf("AppName"),
+    HostName = valueOf("HostName")
+});
 
 #region Identity Config
 
@@ -102,10 +109,11 @@ builder.Services.AddAuthorization(options =>
 AuthenticationResult catalogResult = default;
 builder.Services.AddSingleton(new DbContextOptionsBuilder<CatalogContext>()
             .UseSqlServer(config["Catalog:ConnectionString"])
-            .AddInterceptors(new AzureAuthInterceptor(async () => {
+            .AddInterceptors(new AzureAuthInterceptor(async () =>
+            {
                 // CHECK INVALIDATION
                 if (catalogResult is null)
-                { 
+                {
                     catalogResult = await fabricAppConfig.ConfidentialAuthenticateAsync();
                 }
                 return catalogResult.AccessToken;
@@ -116,6 +124,8 @@ builder.Services.AddTransient<CatalogContext>();
 
 #endregion
 
+builder.Services.AddSingleton(new UriTools(config["UriTools:SigningKey"]));
+
 builder.Services.AddScoped<CatalogService>();
 
 //builder.Services.AddScoped<HmiJsInterop>();
@@ -125,17 +135,18 @@ builder.Services.AddScoped<KustoDashboardJsInterop>();
 //builder.Services.AddHybridCache();
 //#pragma warning restore EXTEXP0018 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 
-builder.Services.AddKeyedTransient<IMessagingService, MqttClientService>("MqttClientTimers");
-builder.Services.AddKeyedTransient<IMessagingService, MqttClientService>("MqttClientPortalApp");
-builder.Services.AddKeyedTransient<IMessagingService, MqttClientService>("MqttClientFabricHook");
+//builder.Services.AddKeyedTransient<IMessagingService, MqttClientService>("MqttClientTimers");
+//builder.Services.AddKeyedTransient<IMessagingService, MqttClientService>("MqttClientPortalApp");
+//builder.Services.AddKeyedTransient<IMessagingService, MqttClientService>("MqttClientFabricHook");
 //builder.Services.AddTransient(sp => new UnifiedNamespaceContext(new DbContextOptionsBuilder<UnifiedNamespaceContext>().UseSqlServer(conf["Database:connectionString"]).Options));
 //builder.Services.AddTransient<IRetainedMessageService, EFRetainedMessageService>();
 
-builder.Services.AddKeyedTransient<IWorkerService, TimerServices>("timerService");
-builder.Services.AddKeyedTransient<IWorkerService, VirtualSignalsService>("virtualSignalsService");
+//builder.Services.AddKeyedTransient<IWorkerService, TimerServices>("timerService");
+//builder.Services.AddKeyedTransient<IWorkerService, VirtualSignalsService>("virtualSignalsService");
 //builder.Services.AddKeyedTransient<IWorkerService, MqttBrokerService>("mqttBrokerService");
 
-builder.Services.AddHostedService<WorkerServicesManager>();
+//builder.Services.AddHostedService<WorkerServicesManager>();
+
 
 builder.Services.AddTransient<PowerBIEmbeddingJsInterop>();
 
@@ -146,6 +157,7 @@ builder.Services.AddRazorComponents()
     .AddMicrosoftIdentityConsentHandler();
 
 builder.Services.AddProblemDetails();
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
@@ -185,9 +197,8 @@ app.MapPost("/api/handleNewTopic", async (HttpContext ctx, IServiceProvider sp, 
 
 var httpClient = new HttpClient();
 
-
 var mqttClientFabricHook = app.Services.GetKeyedService<IMessagingService>("MqttClientFabricHook");
-await mqttClientFabricHook.ConnectAsync();
+//await mqttClientFabricHook.ConnectAsync();
 
 app.MapPost("/api/fabrichook", async (HttpContext ctx, IServiceProvider sp, JsonElement element) =>
 {
@@ -219,7 +230,8 @@ app.MapPost("/api/pipelinetimer", async (HttpContext ctx, IServiceProvider sp, J
 {
     try
     {
-        var result = await timerApp.HttpClient.PostAsJsonAsync("https://api.fabric.microsoft.com/v1/workspaces/a1badeec-a4dc-480b-a8a6-7065c012dee1/items/cc610143-b66b-4fb8-b9a3-ef707e7bbef9/jobs/instances?jobType=Pipeline", new { 
+        var result = await timerApp.HttpClient.PostAsJsonAsync("https://api.fabric.microsoft.com/v1/workspaces/a1badeec-a4dc-480b-a8a6-7065c012dee1/items/cc610143-b66b-4fb8-b9a3-ef707e7bbef9/jobs/instances?jobType=Pipeline", new
+        {
         });
         return Results.Ok();
     }
@@ -229,4 +241,95 @@ app.MapPost("/api/pipelinetimer", async (HttpContext ctx, IServiceProvider sp, J
     }
 });
 
+app.MapGet("/api/things/{thingId}/certificate", async (HttpContext ctx, IServiceProvider sp, CertificateService cs, UriTools uriTools, string thingId) =>
+{
+    //if (IsRemoteRequest(ctx))
+    //{
+    //    if (!uriTools.Validate(ctx.Request.Query))
+    //    {
+    //        return Results.BadRequest("Invalid signature");
+    //    }
+    //}
+
+    try
+    {
+
+        var catalog = sp.GetService<CatalogService>();
+        var deviceCert = await catalog.GetThingPropertyAsync(thingId, "DeviceCert");
+        var password = await catalog.GetThingPropertyAsync(thingId, "password");
+        var deviceCertBytes = Convert.FromBase64String(deviceCert.Value);
+        return Results.File(deviceCertBytes, deviceCert.ContentType, $"{thingId}.pfx");
+    }
+    catch (Exception ex)
+    {
+        throw;
+    }
+});
+
 app.Run();
+
+AzureApplicationConfig RegisterAzureApplication<TApp>(string name, string sectionName = default)
+    where TApp : AzureApplication
+{
+    sectionName ??= $"{name}Config";
+    var cfg = new AzureApplicationConfig
+    {
+        TenantId = config[$"{sectionName}:TenantId"],
+        ClientId = config[$"{sectionName}:ClientId"],
+        ClientSecret = config[$"{sectionName}:ClientSecret"],
+        Username = config[$"{sectionName}:Username"],
+        Password = config[$"{sectionName}:Password"],
+        Resource = AzureResource.Parse(config[$"{sectionName}:Resource"])
+    };
+    builder.Services.AddKeyedSingleton(sectionName, cfg);
+    builder.Services.AddKeyedTransient<TApp>(name, (sp, key) =>
+    {
+        var cfg = sp.GetKeyedService<AzureApplicationConfig>(sectionName);
+        var app = (TApp)Activator.CreateInstance(typeof(TApp), cfg);
+        return app;
+    });
+    return cfg;
+}
+
+void RegisterService<TService, TConfig>(string name, Func<Func<string, string>, TConfig> newConfig, string sectionName = null)
+    where TService: class
+    where TConfig: class
+{
+    sectionName ??= $"{name}Config";
+    var cfg = newConfig((key) => config[$"{sectionName}:{key}"]);
+    builder.Services.AddKeyedSingleton(sectionName, cfg);
+    builder.Services.AddKeyedTransient<TService>(name, (sp, key) =>
+    {
+        var cfg = sp.GetKeyedService<TConfig>(sectionName);
+        var app = (TService) Activator.CreateInstance(typeof(TService), cfg, sp);
+        return app;
+    });
+}
+
+bool IsRemoteRequest(HttpContext context)
+{
+    // Get the current host
+    var currentHost = context.Request.Host.Host;
+
+    // Check Referer header
+    if (context.Request.Headers.TryGetValue("Referer", out var referer))
+    {
+        var refererUri = new Uri(referer);
+        if (!string.Equals(refererUri.Host, currentHost, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+    }
+
+    // Check Origin header (useful for CORS requests)
+    if (context.Request.Headers.TryGetValue("Origin", out var origin))
+    {
+        var originUri = new Uri(origin);
+        if (!string.Equals(originUri.Host, currentHost, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}

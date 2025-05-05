@@ -3,7 +3,7 @@ using Microsoft.Identity.Client;
 
 namespace AzureApplicationLib;
 
-public partial class AzureApplication<TConfig>
+public partial class AzureApplication
 {
     private AuthenticationResult? authenticationResult;
 

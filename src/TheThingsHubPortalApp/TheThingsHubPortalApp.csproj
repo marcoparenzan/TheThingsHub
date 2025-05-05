@@ -22,6 +22,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\AzureIoTLib\AzureIoTLib.csproj" />
 		<ProjectReference Include="..\CatalogLib\CatalogLib.csproj" />
 		<ProjectReference Include="..\KustoDashboardLib\KustoDashboardLib.csproj" />
 		<ProjectReference Include="..\PowerBIEmbeddingLib\PowerBIEmbeddingLib.csproj" />
@@ -29,6 +30,7 @@
 		<ProjectReference Include="..\PowerFxLib\PowerFxLib.csproj" />
 		<ProjectReference Include="..\UnifiedNamespaceLib\UnifiedNamespaceLib.csproj" />
 		<ProjectReference Include="..\HmiLib\HmiLib.csproj" />
+		<ProjectReference Include="..\WebLib\WebLib.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

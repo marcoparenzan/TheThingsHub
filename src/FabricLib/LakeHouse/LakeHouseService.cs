@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.StaticFiles;
 
 namespace FabricLib.LakeHouse;
 
-public partial class LakeHouseService(AzureApplication<AzureApplicationConfig> identity, WorkspaceConfig workspaceInfo)
+public partial class LakeHouseService(AzureApplication identity, WorkspaceConfig workspaceInfo)
 {
     DataLakeServiceClient serviceClient;
     DataLakeFileSystemClient fileSystemClient;

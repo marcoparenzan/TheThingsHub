@@ -4,6 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CatalogLib;
 
-public partial class CatalogService(CatalogContext context)
+public partial class CatalogService(CatalogContext context, CertificateService certs)
 {
 }

@@ -15,9 +15,6 @@ public partial class AzureApplicationConfig
     [JsonPropertyName("tenantId")]
     public string TenantId { get; set; }
 
-    [JsonPropertyName("subscriptionId")]
-    public string SubscriptionId { get; set; }
-
     [JsonPropertyName("clientId")]
     public string ClientId { get; set; }
 

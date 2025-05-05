@@ -37,6 +37,7 @@
             <MudButton Variant="Variant.Filled" Color="Color.Default" Href="/catalog/things">Back to List</MudButton>
         </MudCardActions>
         <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+
             <MudTabPanel Text="Properties">
 
                 <MudDataGrid Items="@properties">
@@ -108,6 +109,7 @@
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="AttachFilesAsync">Attach files</MudButton>
                 </MudCardActions>
             </MudTabPanel>
+
         </MudTabs>
 
     }
@@ -128,6 +130,8 @@
     MudForm form;
 
     IList<IBrowserFile> files = new List<IBrowserFile>();
+
+    Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider provider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
 
     protected override async Task OnInitializedAsync()
     {
@@ -181,31 +185,40 @@
 
     private async Task AttachFilesAsync()
     {
-        var provider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
-
         foreach (var browseFile in files)
         {
             var extension = Path.GetExtension(browseFile.Name);
             var filename = $"{Id}-{Path.GetFileNameWithoutExtension(browseFile.Name)}-{DateTimeOffset.Now.ToFileTime()}{extension}";
-            using (var str = browseFile.OpenReadStream())
+            var contentType = ContentTypeOf(browseFile);
+            using (var stream = browseFile.OpenReadStream())
             {
-                await ols.UploadFileAsync("Things", "Attachments", filename, str);
+                await AttachFilesAsync(filename, extension, contentType, stream);
             }
-            
-            var newAttachment = catalogService.NewThingAttachment();
-            newAttachment.Name = filename;
-            newAttachment.Value = filename;
-            newAttachment.Type = extension;
-            if (provider.TryGetContentType(browseFile.Name, out var contentType))
-            {
-                newAttachment.ContentType = contentType;
-            }
-            else
-            {
-                newAttachment.ContentType = browseFile.ContentType;
-            }
-            var newId = await catalogService.CreateThingAttachmentAsync(Id, newAttachment);
         }
-		files.Clear();
-	}
+        files.Clear();
+    }
+
+    private string ContentTypeOf(IBrowserFile browseFile)
+    {
+        if (provider.TryGetContentType(browseFile.Name, out var contentType))
+        {
+            return contentType;
+        }
+        else
+        {
+            return browseFile.ContentType;
+        }
+    }
+
+    private async Task<int> AttachFilesAsync(string filename, string extension, string contentType, Stream stream)
+    {
+        await ols.UploadFileAsync("Things", "Attachments", filename, stream);
+        var newAttachment = catalogService.NewThingAttachment();
+        newAttachment.Name = filename;
+        newAttachment.Value = filename;
+        newAttachment.Type = extension;
+        newAttachment.ContentType = contentType;
+        var newId = await catalogService.CreateThingAttachmentAsync(Id, newAttachment);
+        return newId;
+    }
 }

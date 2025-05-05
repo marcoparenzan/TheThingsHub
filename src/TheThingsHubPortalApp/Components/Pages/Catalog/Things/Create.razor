@@ -26,6 +26,8 @@
     </MudForm>
     <MudCardActions>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await CreateNewThingAsync())">Create</MudButton>
+		<MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await CreateNewEventGridDeviceAsync())">Create EventGrid Device</MudButton>
+		<MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await CreateNewIoTHubDeviceAsync())">Create IoT Hub Device</MudButton>
 		<MudButton Variant="Variant.Filled" Color="Color.Default" Href="/catalog/things">Back to List</MudButton>
 	</MudCardActions>
 </MudCard>
@@ -34,6 +36,12 @@
 
     [SupplyParameterFromForm]
     ThingModel Model { get; set; }
+
+	[Inject(Key = "EventGridIdentityService")]
+	public AzureIoTLib.EventGrid.EventGridIdentityService EventGridIdentityService { get; set; }
+
+	[Inject(Key = "IoTHubIdentityService")]
+	public AzureIoTLib.IoTHub.IoTHubIdentityService IoTHubIdentityService { get; set; }
 
     MudForm form;
 
@@ -63,6 +71,62 @@
 		catch (Exception ex)
 		{
 			
+		}
+	}
+
+	private async Task CreateNewEventGridDeviceAsync()
+	{
+		try
+		{
+			await catalogService.NewEventGridDeviceAsync(Model, async (cert) =>
+			{
+				try
+				{
+					await EventGridIdentityService.CreateNewAsync(Model.Name, cert.Thumbprint);
+					return true;
+				}
+				catch (Exception ex)
+				{
+					return false;
+				}
+			});
+			nm.NavigateTo("/catalog/things", true, true);
+		}
+		catch (NavigationException ex)
+		{
+
+		}
+		catch (Exception ex)
+		{
+
+		}
+	}
+
+	private async Task CreateNewIoTHubDeviceAsync()
+	{
+		try
+		{
+			await catalogService.NewIoTHubDeviceAsync(Model, async (cert) =>
+			{
+				try
+				{
+					await IoTHubIdentityService.CreateNewAsync(Model.Name, cert.Thumbprint);
+					return true;
+				}
+				catch (Exception ex)
+				{
+					return false;
+				}
+			});
+			nm.NavigateTo("/catalog/things", true, true);
+		}
+		catch (NavigationException ex)
+		{
+
+		}
+		catch (Exception ex)
+		{
+
 		}
 	}
 

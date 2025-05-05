@@ -8,7 +8,7 @@ namespace TheThingsHubPortalApp.Services;
 
 public partial class FabricApp : PowerBiApplication
 {
-    public FabricApp([FromKeyedServices("FabricAppConfig")] AzureApplicationConfig config = null, ILogger logger = null) : base(config, logger)
+    public FabricApp(AzureApplicationConfig config = null) : base(config)
     {
     }
 
