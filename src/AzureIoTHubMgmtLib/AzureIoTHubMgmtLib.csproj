@@ -5,17 +5,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
 	<ItemGroup>
 		<PackageReference Include="Azure.Identity" Version="1.13.2" />
-		<PackageReference Include="Azure.ResourceManager.EventGrid" Version="1.1.0" />
 		<PackageReference Include="Azure.ResourceManager.IoTHub" Version="1.1.1" />
 		<PackageReference Include="Microsoft.Azure.Devices" Version="1.40.0" />
-		<PackageReference Include="Hashids.net" Version="1.7.0" />
 	</ItemGroup>
-
 	<ItemGroup>
-		<ProjectReference Include="..\AzureApplicationLib\AzureApplicationLib.csproj" />
+	  <ProjectReference Include="..\AzureApplicationLib\AzureApplicationLib.csproj" />
 	</ItemGroup>
 
 </Project>

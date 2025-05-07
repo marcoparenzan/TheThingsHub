@@ -6,7 +6,7 @@ using Azure.ResourceManager.EventGrid.Models;
 using AzureApplicationLib;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace AzureIoTLib.EventGrid;
+namespace AzureEventGridMgmtLib;
 
 public class EventGridIdentityServiceConfig
 {

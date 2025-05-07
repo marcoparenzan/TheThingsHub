@@ -5,7 +5,7 @@ using AzureApplicationLib;
 using Microsoft.Azure.Devices;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace AzureIoTLib.IoTHub;
+namespace AzureIoTHubMgmtLib;
 
 public class IoTHubIdentityServiceConfig
 {

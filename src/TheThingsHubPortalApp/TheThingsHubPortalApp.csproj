@@ -22,7 +22,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\AzureIoTLib\AzureIoTLib.csproj" />
+		<ProjectReference Include="..\AzureAksMgmtLib\AzureAksMgmtLib.csproj" />
+		<ProjectReference Include="..\AzureEventGridMgmtLib\AzureEventGridMgmtLib.csproj" />
+		<ProjectReference Include="..\AzureIoTHubMgmtLib\AzureIoTHubMgmtLib.csproj" />
 		<ProjectReference Include="..\CatalogLib\CatalogLib.csproj" />
 		<ProjectReference Include="..\KustoDashboardLib\KustoDashboardLib.csproj" />
 		<ProjectReference Include="..\PowerBIEmbeddingLib\PowerBIEmbeddingLib.csproj" />

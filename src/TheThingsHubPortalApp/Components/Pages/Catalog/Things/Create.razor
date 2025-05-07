@@ -26,6 +26,7 @@
     </MudForm>
     <MudCardActions>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await CreateNewThingAsync())">Create</MudButton>
+		<MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await CreateNewHttpDeviceAsync())">Create Http Device</MudButton>
 		<MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await CreateNewEventGridDeviceAsync())">Create EventGrid Device</MudButton>
 		<MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await CreateNewIoTHubDeviceAsync())">Create IoT Hub Device</MudButton>
 		<MudButton Variant="Variant.Filled" Color="Color.Default" Href="/catalog/things">Back to List</MudButton>
@@ -34,16 +35,19 @@
 
 @code {
 
-    [SupplyParameterFromForm]
-    ThingModel Model { get; set; }
+	[SupplyParameterFromForm]
+	ThingModel Model { get; set; }
 
 	[Inject(Key = "EventGridIdentityService")]
-	public AzureIoTLib.EventGrid.EventGridIdentityService EventGridIdentityService { get; set; }
+	public AzureEventGridMgmtLib.EventGridIdentityService EventGridIdentityService { get; set; }
 
 	[Inject(Key = "IoTHubIdentityService")]
-	public AzureIoTLib.IoTHub.IoTHubIdentityService IoTHubIdentityService { get; set; }
+	public AzureIoTHubMgmtLib.IoTHubIdentityService IoTHubIdentityService { get; set; }
 
-    MudForm form;
+	[Inject(Key = "AksIdentityService")]
+	public AzureAksMgmtLib.AksIdentityService AksIdentityService { get; set; }
+
+	MudForm form;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -70,7 +74,37 @@
 		}
 		catch (Exception ex)
 		{
-			
+
+		}
+	}
+
+
+	private async Task CreateNewHttpDeviceAsync()
+	{
+		try
+		{
+			await catalogService.NewHttpDeviceAsync(Model, async (password) =>
+			{
+				try
+				{
+					var (meta, port, labels) = await AksIdentityService.NewAspNetCoreDeploymentAsync(Model.Name, password);
+					var metaService = await AksIdentityService.NewServiceAsync($"{Model.Name}-service", port, labels);
+					return (true, port);
+				}
+				catch (Exception ex)
+				{
+					return (false, default);
+				}
+			});
+			nm.NavigateTo("/catalog/things", true, true);
+		}
+		catch (NavigationException ex)
+		{
+
+		}
+		catch (Exception ex)
+		{
+
 		}
 	}
 

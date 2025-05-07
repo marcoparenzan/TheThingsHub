@@ -68,7 +68,7 @@ builder.Services.AddTransient<LakeHouseService>(sp =>
     )
 );
 
-RegisterService<AzureIoTLib.EventGrid.EventGridIdentityService, AzureIoTLib.EventGrid.EventGridIdentityServiceConfig>("EventGridIdentityService", (valueOf) => new AzureIoTLib.EventGrid.EventGridIdentityServiceConfig
+RegisterService<AzureEventGridMgmtLib.EventGridIdentityService, AzureEventGridMgmtLib.EventGridIdentityServiceConfig>("EventGridIdentityService", (valueOf) => new AzureEventGridMgmtLib.EventGridIdentityServiceConfig
 {
     AppName = valueOf("AppName"),
     SubscriptionId = valueOf("SubscriptionId"),
@@ -77,10 +77,18 @@ RegisterService<AzureIoTLib.EventGrid.EventGridIdentityService, AzureIoTLib.Even
 });
 builder.Services.AddTransient<CatalogLib.CertificateService>();
 
-RegisterService<AzureIoTLib.IoTHub.IoTHubIdentityService, AzureIoTLib.IoTHub.IoTHubIdentityServiceConfig>("IoTHubIdentityService", (valueOf) => new AzureIoTLib.IoTHub.IoTHubIdentityServiceConfig
+RegisterService<AzureIoTHubMgmtLib.IoTHubIdentityService, AzureIoTHubMgmtLib.IoTHubIdentityServiceConfig>("IoTHubIdentityService", (valueOf) => new AzureIoTHubMgmtLib.IoTHubIdentityServiceConfig
 {
     AppName = valueOf("AppName"),
     HostName = valueOf("HostName")
+});
+
+RegisterService<AzureAksMgmtLib.AksIdentityService, AzureAksMgmtLib.AksIdentityServiceConfig>("AksIdentityService", (valueOf) => new AzureAksMgmtLib.AksIdentityServiceConfig
+{
+    AppName = valueOf("AppName"),
+    NamespaceName = valueOf("NamespaceName"),
+    ImageName = valueOf("ImageName"),
+    KubeConfig = Path.Combine(Path.GetDirectoryName(tenantConfigurationFile), valueOf("KubeConfig"))
 });
 
 #region Identity Config
